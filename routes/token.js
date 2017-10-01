@@ -1,47 +1,48 @@
-// 'use strict';
-// const jwt= require('jsonwebtoken')
-// const express = require('express');
-// // eslint-disable-next-line new-cap
-// const router = express.Router();
-//
-// // YOUR CODE HERE
-//
-// module.exports = router;
-//
-// //
-// router.get('/token', function(req, res, next) {
-//   //verify that token matches cookie
-//       jwt.verify(req.cookies.token, process.env.JWT_KEY, (err, payload) => {
-//         if (err) {
-//         return res.send(false)
-//         }
-//         else{
-//         res.send(true)
-// }
-//
-// })
-// })
-// router.post('/token', function(req, res, next){
-//
-// //set a cookie
-// insert({
-//   id: 2,
-//   first_name: req.body.firstName,
-//   last_name: req.body.lastName,
-//   email: req.body.email,
-//   hashed_password: result //password that just got hashed
-// }, '*')
-// // .first()
-// .then((camelNew) => {
-//   let newUser = {
-//     id: camelNew[0].id,
-//     firstName: camelNew[0].first_name,
-//     lastName: camelNew[0].last_name,
-//     email: camelNew[0].email,
-//     password: camelNew[0].password
-//   }
-//   res.send(newUser);
-//   // res.sendStatus(200);
-//    res.cookie("token", token)
-//
-// })
+const jwt = require('jsonwebtoken')
+const express = require('express')
+var knex = require('../knex')
+const router = express.Router();
+const humps= require('humps')
+const camelNew=humps.camelizeKeys('users')
+
+
+/* GET users listing. */
+router.get('/token', function(req, res, next) {
+
+  // let token;
+  // console.log(req.cookies.token)
+  if (!req.cookies.token) {
+    res.send(false)
+  }
+
+
+  res.end();
+  // res.send(`${user.name} you've been here ${user.visits} times`);
+});
+router.post('/token', function(req, res, next) {
+  knex('users')
+    .where('email', req.body.email)
+    .then((users) => {
+      let user = users[0];
+      delete user.hashed_password;
+      delete user.created_at;
+      delete user.updated_at;
+      let camelUser = humps.camelizeKeys(user);
+      console.log(camelUser);
+      let cookie = jwt.sign(camelUser, process.env.JWT_KEY);
+      console.log(cookie);
+      res.cookie('token', cookie, {httpOnly: true});
+      res.send(camelUser);
+    })
+
+
+})
+
+router.get('/token', function(req, res, next){
+  if (req.cookies.token) {
+    res.send(true)
+  }
+
+})
+
+module.exports = router;
