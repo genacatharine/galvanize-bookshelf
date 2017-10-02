@@ -2,23 +2,28 @@ const jwt = require('jsonwebtoken')
 const express = require('express')
 var knex = require('../knex')
 const router = express.Router();
-const humps= require('humps')
-const camelNew=humps.camelizeKeys('users')
+const humps = require('humps')
+const JWT_KEY = process.env.JWT_KEY
+const camelNew = humps.camelizeKeys('users')
 
 
 /* GET users listing. */
-router.get('/token', function(req, res, next) {
-
-  // let token;
-  // console.log(req.cookies.token)
-  if (!req.cookies.token) {
-    res.send(false)
+router.get('/token', (req, res) => {
+jwt.verify(req.cookies.token, JWT_KEY, (err, payload) => {
+    if (err){
+      // })
+      // }
+      // '/token', function(req, res, next) {
+      // if (!req.cookies.token) {
+      res.send(false)
   }
-
-
-  res.end();
-  // res.send(`${user.name} you've been here ${user.visits} times`);
+  else {
+    res.send(true)
+  }
+})
 });
+
+/* POST */
 router.post('/token', function(req, res, next) {
   knex('users')
     .where('email', req.body.email)
@@ -28,21 +33,27 @@ router.post('/token', function(req, res, next) {
       delete user.created_at;
       delete user.updated_at;
       let camelUser = humps.camelizeKeys(user);
-      console.log(camelUser);
+      // console.log(camelUser);
       let cookie = jwt.sign(camelUser, process.env.JWT_KEY);
-      console.log(cookie);
-      res.cookie('token', cookie, {httpOnly: true});
+      // console.log(cookie);
+      res.cookie('token', cookie, {
+        httpOnly: true
+      });
       res.send(camelUser);
     })
 
 
 })
-
-router.get('/token', function(req, res, next){
-  if (req.cookies.token) {
-    res.send(true)
-  }
-
+/* DELETE */
+router.delete('/token', function(req, res, next) {
+  // console.log(cookie)
+  if (req.cookies.token)
+    res.clearCookie('token')
+    .then((result) => {
+      // console.log('token')
+      res.send('token')
+      res.sendStatus(200)
+    })
 })
 
 module.exports = router;
