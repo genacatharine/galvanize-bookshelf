@@ -10,7 +10,6 @@ const bcrypt = require('bcrypt');
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
-// YOUR CODE HERE
 router.get('/books', function(req, res, next){
   knex(camelNew)
   .select(
