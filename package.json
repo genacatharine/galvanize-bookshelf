@@ -8,10 +8,8 @@
     "knex": "knex",
     "lint": "eslint  --ignore-pattern public/js/vendor",
     "nf": "nf start",
-    "start": "node ./bin/www",
-    "test": "mocha",
-    "knex": "knex",
-    "nodemon": "node server.js"
+    "start": "node server.js",
+    "test": "mocha"
 }
   },
   "repository": {
@@ -31,6 +29,7 @@
   "dependencies": {
     "bcrypt": "1.0.2",
     "body-parser": "^1.15.2",
+    "dotenv": "^2.0.0",
     "boom": "^3.2.2",
     "cookie-parser": "^1.4.3",
     "express": "^4.14.0",
@@ -42,7 +41,6 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "dotenv": "^2.0.0",
     "eslint": "^3.1.1",
     "eslint-config-ryansobol": "^7.7.0",
     "foreman": "^1.4.1",
