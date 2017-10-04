@@ -1,95 +1,95 @@
 'use strict';
-const boom = require('boom')
-const jwt = require('jsonwebtoken')
+
+const bcrypt = require('bcrypt');
+const boom = require('boom');
+const { camelizeKeys, decamelizeKeys } = require('humps');
+const jwt = require('jsonwebtoken');
+const knex = require('../knex');
 const express = require('express');
-const knex = require('../knex')
-const JWT_KEY = process.env.JWT_KEY
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
-const humps = require('humps')
 
-
-const authorize= (req, res, next)=> {
-  jwt.verify(req.cookies.token, JWT_KEY, (err, decoded) => {
+const authorize = function(req, res, next) {
+  jwt.verify(req.cookies.token, process.env.JWT_KEY, (err, payload) => {
     if (err) {
-      res.status(400).send('Unauthorized')
+      return next(boom.create(401, 'Unauthorized'));
     }
-    req.claim = decoded
-    console.log(req.claim.user_id)
-    next()
-  })
-}
 
-router.get('/favorites', authorize, function(req, res, next) {
+    req.claim = payload;
+
+    next();
+  });
+};
+
+
+router.get('/favorites', authorize, (req, res, next) => {
   knex('favorites')
-    .innerJoin('books', 'favorites.book_id', '=', 'books.id')
-    .where('favorites.user_id', req.claim.usersID)
-
+    .innerJoin('books', 'books.id', 'favorites.book_id')
+    .where('favorites.user_id', req.claim.userId)
     .then((rows) => {
-      const favs = humps.camelizeKeys(rows)
+      const favorites = camelizeKeys(rows);
 
-      res.send(favs)
+      res.send(favorites);
     })
     .catch((err) => {
-      next(err)
-    })
-})
-//
-router.get('/favorites/check', authorize, function(req, res, next) {
-// //
-// //   console.log('req bookid', req.query.bookId)
-// //
+      next(err);
+    });
+});
+
+
+router.get('/favorites/check', authorize, (req, res, next) => {
   knex('favorites')
-    // .('books', 'favorites.book_id', 'books.id')
-
-    .where('book_id', req.query.bookId)
-    .then((rows) => {
-      const favs = humps.camelizeKeys(rows)
-
-      if (favs.length<1) {
-        // console.log('favs', favs)
-        res.status(200)
-        res.send(false)
-      } else {
-        res.status(200)
+    .where('favorites.book_id', req.query.bookId)
+    .andWhere('favorites.user_id', req.claim.userId)
+    .then((row) => {
+      if (row.length) {
         res.send(true)
+      } else {
+        res.send(false);
+      }
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
 
+
+router.post('/favorites', authorize, (req, res, next) => {
+  const postObj = {
+    user_id: req.claim.userId,
+    book_id: req.body.bookId,
+  }
+  knex('favorites')
+    .insert( postObj )
+    .returning('*')
+    .then((favorite) => {
+      res.send(camelizeKeys(favorite[0]));
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
+
+router.delete('/favorites', authorize, (req, res, next) => {
+  knex('favorites')
+    .del()
+    .where('book_id', req.body.bookId)
+    .andWhere('user_id', req.claim.userId)
+    .then(() => {
+      const delObj = {
+        bookId: req.body.bookId,
+        userId: req.claim.userId
       }
 
+      res.send(delObj);
+    })
+    .catch((err) => {
+      next(err);
+    });
+});
 
-  })
-  .catch((err) => {
-    next(err)
-})
-})
-//
-// router.post('/favorites', authorize, function(req, res, next) {
-//   // console.log('req claim ', req.claim);
-//   // console.log('reqbody', req.body);
-//
-//
-//   knex('favorites')
-//     .insert({
-//       book_id: req.body.bookId,
-//       user_id: req.claim.usersID
-//     })
-//     .then((result) => {
-//         res.status(200)
-//         res.send(result)
-//       }
-//
-//     )
-// })
-// //
-// router.delete('/favorites', authorize, function(req, res, next) {
-//   knex('favorites')
-//     .del()
-//     .where('book_id', req.query.bookId)
-//     .then((result) => {
-//   res.status(200)
-//   res.send(result)
-//     })
-//
-// })
+
+
+
 module.exports = router;

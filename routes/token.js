@@ -35,7 +35,7 @@ router.post('/token', function(req, res, next) {
         bcrypt.compare(req.body.password, users.hashed_password, function(err, match) {
           if (match) {
             let token = jwt.sign({
-              usersID: users.id
+              userId: users.id
             }, process.env.JWT_KEY);
 
             let newObj = {
