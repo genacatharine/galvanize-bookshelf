@@ -10,7 +10,6 @@
     "nf": "nf start",
     "start": "node server.js",
     "test": "mocha"
-},
   },
   "repository": {
     "type": "git",
